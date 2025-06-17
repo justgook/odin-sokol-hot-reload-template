@@ -1,29 +1,31 @@
+#+build js
+package entry
+
+
 // Implementations of `read_entire_file` and `write_entire_file` using the libc
 // stuff emscripten exposes. You can read the files that get bundled by
 // `--preload-file assets` in `build_web` script.
 
-#+build wasm32, wasm64p32
-
-package web_support
-
 import "base:runtime"
-import "core:log"
 import "core:c"
+import "core:log"
 import "core:strings"
 
 // These will be linked in by emscripten.
 @(default_calling_convention = "c")
-foreign {
-	fopen  :: proc(filename, mode: cstring) -> ^FILE ---
-	fseek  :: proc(stream: ^FILE, offset: c.long, whence: Whence) -> c.int ---
-	ftell  :: proc(stream: ^FILE) -> c.long ---
+foreign _ {
+	fopen :: proc(filename, mode: cstring) -> ^FILE ---
+	fseek :: proc(stream: ^FILE, offset: c.long, whence: Whence) -> c.int ---
+	ftell :: proc(stream: ^FILE) -> c.long ---
 	fclose :: proc(stream: ^FILE) -> c.int ---
-	fread  :: proc(ptr: rawptr, size: c.size_t, nmemb: c.size_t, stream: ^FILE) -> c.size_t ---
+	fread :: proc(ptr: rawptr, size: c.size_t, nmemb: c.size_t, stream: ^FILE) -> c.size_t ---
 	fwrite :: proc(ptr: rawptr, size: c.size_t, nmemb: c.size_t, stream: ^FILE) -> c.size_t ---
 }
 
-FILE :: struct{}
+@(private = "file")
+FILE :: struct {}
 
+@(private = "file")
 Whence :: enum c.int {
 	SET,
 	CUR,
@@ -31,7 +33,15 @@ Whence :: enum c.int {
 }
 
 // Similar to raylib's LoadFileData
-read_entire_file :: proc(name: string, allocator := context.allocator, loc := #caller_location) -> (data: []byte, success: bool) {
+@(private)
+_read_entire_file :: proc(
+	name: string,
+	allocator := context.allocator,
+	loc := #caller_location,
+) -> (
+	data: []byte,
+	success: bool,
+) {
 	if name == "" {
 		log.error("No file name provided")
 		return
@@ -79,7 +89,8 @@ read_entire_file :: proc(name: string, allocator := context.allocator, loc := #c
 // save any data between sessions. So when you close the tab your saved files
 // are gone. Perhaps you could communicate back to emscripten and save a cookie.
 // Or communicate with a server and tell it to save data.
-write_entire_file :: proc(name: string, data: []byte, truncate := true) -> (success: bool) {
+@(private)
+_write_entire_file :: proc(name: string, data: []byte, truncate := true) -> (success: bool) {
 	if name == "" {
 		log.error("No file name provided")
 		return
@@ -102,7 +113,7 @@ write_entire_file :: proc(name: string, data: []byte, truncate := true) -> (succ
 		log.errorf("File partially written, wrote %v out of %v bytes", bytes_written, len(data))
 		return
 	}
-	
+
 	log.debugf("File written successfully: %v", name)
 	return true
 }

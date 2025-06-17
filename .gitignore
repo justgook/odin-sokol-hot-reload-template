@@ -1,16 +1,8 @@
-build
-build*
-project.sublime-workspace
-game_hot_reload.exe
-game_hot_reload.bin
-linux
-log.txt
-dylib/
-*.rdi
-*.pdb
-sokol-shdc
-source/sokol
-sokol_dll*
-
-# generated shaders are prefixed with gen__ so they can be ignored
+odin-sokol-hot-reload-template
+build.nosync
+sokol-shdc/
+src/game/sokol/
+*.a
+*.dylib
 gen__*.odin
+

@@ -26,6 +26,7 @@ returned by the `game_app_default_desc` procedure.
 
 package game
 
+import "../entry"
 import "core:image/png"
 import "core:log"
 import "core:math/linalg"
@@ -157,8 +158,10 @@ game_init :: proc() {
 		{usage = {index_buffer = true}, data = {ptr = &indices, size = size_of(indices)}},
 	)
 
-	if img_data, img_data_ok := read_entire_file("assets/round_cat.png", context.temp_allocator);
-	   img_data_ok {
+	if img_data, img_data_ok := entry.read_entire_file(
+		"assets/round_cat.png",
+		context.temp_allocator,
+	); img_data_ok {
 		if img, img_err := png.load_from_bytes(img_data, allocator = context.temp_allocator);
 		   img_err == nil {
 			g.bind.images[IMG_tex] = sg.make_image(
@@ -208,7 +211,7 @@ game_init :: proc() {
 @(export)
 game_frame :: proc() {
 	dt := f32(sapp.frame_duration())
-	g.rx += 30 * dt
+	g.rx += 0 * dt
 	g.ry += 120 * dt
 
 	// vertex shader uniform with model-view-projection matrix

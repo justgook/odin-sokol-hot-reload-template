@@ -1,25 +1,31 @@
+#+build !freestanding
+#+build !js
+#+build !orca
+
+
+package main
+
 /*
 For making a release exe that does not use hot reload.
 
 Note how this just uses a `game` package to call the game code. No DLL is loaded.
 */
 
-package main_release
-
+import game "../../game"
+import sapp "../../game/sokol/app"
+import "base:runtime"
 import "core:log"
+import "core:mem"
 import "core:os"
 import "core:os/os2"
-import "base:runtime"
-import "core:mem"
-import game ".."
-import sapp "../sokol/app"
 
 _ :: mem
 
 USE_TRACKING_ALLOCATOR :: #config(USE_TRACKING_ALLOCATOR, false)
 
-main :: proc() {
-	if exe_dir, exe_dir_err := os2.get_executable_directory(context.temp_allocator); exe_dir_err == nil {
+_main :: proc() {
+	if exe_dir, exe_dir_err := os2.get_executable_directory(context.temp_allocator);
+	   exe_dir_err == nil {
 		os2.set_working_directory(exe_dir)
 	}
 
@@ -36,7 +42,8 @@ main :: proc() {
 	}
 
 	logger_alloc := context.allocator
-	logger := logh_err == os.ERROR_NONE ? log.create_file_logger(logh, allocator = logger_alloc) : log.create_console_logger(allocator = logger_alloc)
+	logger :=
+		logh_err == os.ERROR_NONE ? log.create_file_logger(logh, allocator = logger_alloc) : log.create_console_logger(allocator = logger_alloc)
 	context.logger = logger
 	custom_context = context
 
@@ -73,21 +80,28 @@ main :: proc() {
 
 custom_context: runtime.Context
 
+
+@(private)
 init :: proc "c" () {
 	context = custom_context
 	game.game_init()
 }
 
+@(private)
 frame :: proc "c" () {
 	context = custom_context
 	game.game_frame()
 }
 
+
+@(private)
 event :: proc "c" (e: ^sapp.Event) {
 	context = custom_context
 	game.game_event(e)
 }
 
+
+@(private)
 cleanup :: proc "c" () {
 	context = custom_context
 	game.game_cleanup()

@@ -17,7 +17,7 @@ import os "core:os/os2"
 import "core:strings"
 import "core:time"
 
-import sapp "../sokol/app"
+import sapp "../../game/sokol/app"
 
 
 Game_API :: struct {

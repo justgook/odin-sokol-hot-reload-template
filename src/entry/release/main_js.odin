@@ -1,25 +1,30 @@
+#+build js
+package main
+
 /*
 Web build entry point. This code is executed by the javascript in
 build/web/index.html (created from source/web/index_template.html).
 */
 
-package main_web
 
-import "core:log"
 import "base:runtime"
+import "core:log"
 
-import game ".."
-import sapp "../sokol/app"
+import game "../../game"
+import sapp "../../game/sokol/app"
 
-main :: proc() {
+_main :: proc() {
 	// The WASM allocator doesn't work properly in combination with emscripten.
 	// This sets up an allocator that uses emscripten's malloc.
 	context.allocator = emscripten_allocator()
 
 	// Make temp allocator use new `context.allocator` by re-initing it.
-	runtime.init_global_temporary_allocator(1*runtime.Megabyte)
+	runtime.init_global_temporary_allocator(1 * runtime.Megabyte)
 
-	context.logger = log.create_console_logger(lowest = .Info, opt = {.Level, .Short_File_Path, .Line, .Procedure})
+	context.logger = log.create_console_logger(
+		lowest = .Info,
+		opt = {.Level, .Short_File_Path, .Line, .Procedure},
+	)
 	custom_context = context
 
 	app_desc := game.game_app_default_desc()
@@ -35,16 +40,19 @@ main :: proc() {
 
 custom_context: runtime.Context
 
+@(private)
 init :: proc "c" () {
 	context = custom_context
 	game.game_init()
 }
 
+@(private)
 frame :: proc "c" () {
 	context = custom_context
 	game.game_frame()
 }
 
+@(private)
 event :: proc "c" (e: ^sapp.Event) {
 	context = custom_context
 	game.game_event(e)
@@ -52,6 +60,7 @@ event :: proc "c" (e: ^sapp.Event) {
 
 // Most web programs will never "quit". The tab will just close. But if you make
 // a web program that runs `sapp.quit()`, then this will run.
+@(private)
 cleanup :: proc "c" () {
 	context = custom_context
 	game.game_cleanup()

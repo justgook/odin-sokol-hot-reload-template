@@ -8,10 +8,10 @@ import "core:path/filepath"
 import "core:strings"
 
 Args :: struct {
-	hot_reload:        bool `flag:"hot-reload"`,
+	hot:               bool `flag:"hot"`,
 	release:           bool `flag:"release"`,
-	update_sokol:      bool `flag:"update-sokol"`,
-	compile_sokol:     bool `flag:"compile-sokol"`,
+	sokol_update:      bool `flag:"sokol-update"`,
+	sokol_compile:     bool `flag:"sokol-compile"`,
 	run:               bool `flag:"run"`,
 	debug:             bool `flag:"debug"`,
 	no_shader_compile: bool `flag:"no-shader-compile"`,
@@ -22,22 +22,28 @@ Args :: struct {
 
 ASSETS_PATH :: #config(ASSETS_PATH, "assets")
 BUILD_PATH :: #config(BUILD_PATH, "build.nosync")
-RELEASE_PATH :: #config(RELEASE_PATH, BUILD_PATH + "/release")
-WEB_PATH :: #config(WEB_PATH, BUILD_PATH + "/web")
-HOT_RELOAD_PATH :: #config(HOT_RELOAD_PATH, BUILD_PATH + "/hot")
-GAME_SRC_PATH :: #config(GAME_SRC_PATH, "source")
-MAIN_SRC_DIR :: #config(MAIN_SRC_DIR, "source")
+
+RELEASE_OUT :: #config(RELEASE_OUT, BUILD_PATH + "/release")
+WEB_OUT :: #config(WEB_OUT, BUILD_PATH + "/web")
+HOT_OUT :: #config(HOT_OUT, BUILD_PATH + "/hot")
+
+GAME_SRC_PATH :: #config(GAME_SRC_PATH, "src/game")
+ENTRY_SRC_DIR :: #config(ENTRY_SRC_DIR, "src/entry")
 DLL_NAME :: #config(DLL_NAME, "game_the_dll")
-SOKOL_PATH :: #config(SOKOL_PATH, "source/sokol")
+
+SOKOL_PATH :: #config(SOKOL_PATH, GAME_SRC_PATH + "/sokol")
 SOKOL_SHDC_PATH :: #config(SOKOL_SHDC_PATH, "sokol-shdc")
+
 SOKOL_URL :: #config(
 	SOKOL_URL,
 	"https://github.com/floooh/sokol-odin/archive/refs/heads/main.tar.gz",
 )
+
 SOKOL_TOOLS_URL :: #config(
 	SOKOL_TOOLS_URL,
 	"https://github.com/floooh/sokol-tools-bin/archive/refs/heads/master.tar.gz",
 )
+
 WEB_SERVER :: #config(WEB_SERVER, "python3 -m http.server --directory")
 
 main :: proc() {
@@ -45,27 +51,19 @@ main :: proc() {
 	flags.parse(&args, os.args[1:], nil)
 
 	num_build_modes := 0
-	if args.hot_reload do num_build_modes += 1
+	if args.hot do num_build_modes += 1
 	if args.release do num_build_modes += 1
 	if args.web do num_build_modes += 1
 
 	if num_build_modes > 1 {
-		fmt.println("Can only use one of: -hot-reload, -release and -web.")
+		fmt.println("Can only use one of: -hot, -release and -web.")
 		os.exit(1)
-	} else if num_build_modes == 0 && !args.update_sokol && !args.compile_sokol {
-		fmt.println(
-			"You must use one of: -hot-reload, -release, -web, -update-sokol or -compile-sokol.",
-		)
+	} else if num_build_modes == 0 && !args.sokol_update && !args.sokol_compile {
+		fmt.println("You must use one of: -hot, -release, -web, -sokol-update or -sokol-compile.")
 		os.exit(1)
 	}
 
-	do_update := args.update_sokol
-
-	// Check for fresh setup
-	if !os.exists(SOKOL_PATH) && !os.exists(SOKOL_SHDC_PATH) {
-		do_update = true
-	}
-
+	do_update := args.sokol_update || !os.exists(SOKOL_PATH) || !os.exists(SOKOL_SHDC_PATH)
 	if do_update {
 		if err := update_sokol(); err != nil {
 			fmt.eprint("error during sokol update", err)
@@ -73,7 +71,7 @@ main :: proc() {
 		}
 	}
 
-	do_compile := do_update || args.compile_sokol
+	do_compile := do_update || args.sokol_compile
 	if do_compile {
 		if err := compile_sokol(&args); err != nil {
 			fmt.eprint("error during sokol compile", err)
@@ -93,7 +91,7 @@ main :: proc() {
 		exe_path = must(build_release(&args))
 	} else if args.web {
 		exe_path = must(build_web(&args))
-	} else if args.hot_reload {
+	} else if args.hot {
 		exe_path = must(build_hot_reload(&args))
 	}
 
@@ -200,12 +198,12 @@ build_shaders :: proc(args: ^Args) -> os.Error {
 	shdc := get_shader_compiler()
 
 	files: [dynamic]string
-	append(&files, ..must(filepath.glob(filepath.join({SOURCE_DIR, "/*.glsl"}))))
-	append(&files, ..must(filepath.glob(filepath.join({SOURCE_DIR, "/*/*.glsl"}))))
-	append(&files, ..must(filepath.glob(filepath.join({SOURCE_DIR, "/*/*/*.glsl"}))))
-	append(&files, ..must(filepath.glob(filepath.join({SOURCE_DIR, "/*/*/*/*.glsl"}))))
-	append(&files, ..must(filepath.glob(filepath.join({SOURCE_DIR, "/*/*/*/*/*.glsl"}))))
-	append(&files, ..must(filepath.glob(filepath.join({SOURCE_DIR, "/*/*/*/*/*/*.glsl"}))))
+	append(&files, ..must(filepath.glob(filepath.join({GAME_SRC_PATH, "/*.glsl"}))))
+	append(&files, ..must(filepath.glob(filepath.join({GAME_SRC_PATH, "/*/*.glsl"}))))
+	append(&files, ..must(filepath.glob(filepath.join({GAME_SRC_PATH, "/*/*/*.glsl"}))))
+	append(&files, ..must(filepath.glob(filepath.join({GAME_SRC_PATH, "/*/*/*/*.glsl"}))))
+	append(&files, ..must(filepath.glob(filepath.join({GAME_SRC_PATH, "/*/*/*/*/*.glsl"}))))
+	append(&files, ..must(filepath.glob(filepath.join({GAME_SRC_PATH, "/*/*/*/*/*/*.glsl"}))))
 
 	langs := ""
 
@@ -238,10 +236,10 @@ build_shaders :: proc(args: ^Args) -> os.Error {
 build_release :: proc(args: ^Args) -> (out: string, err: os.Error) {
 	fmt.println("Building release...")
 
-	delete_dir(RELEASE_PATH) or_return
-	mkdir(RELEASE_PATH) or_return
+	delete_dir(RELEASE_OUT) or_return
+	mkdir(RELEASE_OUT) or_return
 
-	exe := fmt.tprintf("%s/%s", RELEASE_PATH, "game")
+	exe := fmt.tprintf("%s/%s", RELEASE_OUT, "game")
 	when ODIN_OS == .Windows {
 		exe = strings.concatenate([]string{exe, ".exe"})
 	}
@@ -252,7 +250,7 @@ build_release :: proc(args: ^Args) -> (out: string, err: os.Error) {
 		..[]string {
 			"odin",
 			"build",
-			fmt.tprintf("%s/main_release", SOURCE_DIR),
+			fmt.tprintf("%s/release", ENTRY_SRC_DIR),
 			fmt.tprintf("-out:%s", exe),
 			"-strict-style",
 			"-vet",
@@ -273,7 +271,7 @@ build_release :: proc(args: ^Args) -> (out: string, err: os.Error) {
 
 	fmt.println("Building Executable...")
 	execute_cmd(cmd[:]) or_return
-	os.copy_directory_all(RELEASE_PATH, ASSETS_PATH) or_return
+	os.copy_directory_all(RELEASE_OUT, ASSETS_PATH) or_return
 
 	return exe, nil
 }
@@ -281,8 +279,8 @@ build_release :: proc(args: ^Args) -> (out: string, err: os.Error) {
 @(require_results)
 build_web :: proc(args: ^Args) -> (out: string, err: os.Error) {
 	fmt.println("Building web version...")
-	delete_dir(WEB_PATH) or_return
-	mkdir(WEB_PATH) or_return
+	delete_dir(WEB_OUT) or_return
+	mkdir(WEB_OUT) or_return
 
 	odin_extra_args: string
 	if !args.debug {
@@ -290,21 +288,21 @@ build_web :: proc(args: ^Args) -> (out: string, err: os.Error) {
 	}
 	fmt.println("Building js_wasm32 game object...")
 	execute2(
-		"odin build %s/main_web -target:js_wasm32 -build-mode:obj -vet -strict-style -out:%s/game.wasm.o %s",
-		SOURCE_DIR,
-		WEB_PATH,
+		"odin build %s/release -target:js_wasm32 -build-mode:obj -vet -strict-style -out:%s/game.wasm.o %s",
+		ENTRY_SRC_DIR,
+		WEB_OUT,
 		odin_extra_args,
 	) or_return
 
 	os.copy_file(
-		filepath.join([]string{WEB_PATH, "odin.js"}),
+		filepath.join([]string{WEB_OUT, "odin.js"}),
 		filepath.join([]string{ODIN_ROOT, "core/sys/wasm/js/odin.js"}),
 	)
 
 	wasm_lib_suffix := args.debug ? "debug.a" : "release.a"
 	emcc_files_str := strings.join(
 		[]string {
-			WEB_PATH + "/game.wasm.o",
+			WEB_OUT + "/game.wasm.o",
 			fmt.tprintf("%s/app/sokol_app_wasm_gl_%s", SOKOL_PATH, wasm_lib_suffix),
 			fmt.tprintf("%s/audio/sokol_audio_wasm_gl_%s", SOKOL_PATH, wasm_lib_suffix),
 			fmt.tprintf("%s/glue/sokol_glue_wasm_gl_%s", SOKOL_PATH, wasm_lib_suffix),
@@ -318,10 +316,10 @@ build_web :: proc(args: ^Args) -> (out: string, err: os.Error) {
 	// Note --preload-file assets, this bakes in the whole assets directory into
 	// the web build.
 	emcc_flags := fmt.tprintf(
-		"--shell-file %s/web/index_template.html " +
+		"--shell-file %s/release/index_template.html " +
 		"--preload-file %s " +
 		"-sWASM_BIGINT -sWARN_ON_UNDEFINED_SYMBOLS=0 -sMAX_WEBGL_VERSION=2 -sASSERTIONS",
-		SOURCE_DIR,
+		ENTRY_SRC_DIR,
 		ASSETS_PATH,
 	)
 
@@ -334,7 +332,7 @@ build_web :: proc(args: ^Args) -> (out: string, err: os.Error) {
 	emcc_command := fmt.tprintf(
 		"emcc %s -o %s/index.html %s %s",
 		build_flags,
-		WEB_PATH,
+		WEB_OUT,
 		emcc_files_str,
 		emcc_flags,
 	)
@@ -359,18 +357,18 @@ build_web :: proc(args: ^Args) -> (out: string, err: os.Error) {
 		os.exit(1)
 	}
 
-	fmt.printfln("Building web application using emscripten to %s...", WEB_PATH)
+	fmt.printfln("Building web application using emscripten to %s...", WEB_OUT)
 
 	execute2(emcc_command) or_return
-	os.remove(WEB_PATH + "/game.wasm.o")
+	os.remove(WEB_OUT + "/game.wasm.o")
 
-	return WEB_PATH, nil
+	return WEB_OUT, nil
 }
 
 @(require_results)
 build_hot_reload :: proc(args: ^Args) -> (out: string, err: os.Error) {
 	fmt.println("Building hot-reload...")
-	out_dir := HOT_RELOAD_PATH
+	out_dir := HOT_OUT
 
 	PROCESS_NAME :: "game_hot"
 	game_running := process_exists(PROCESS_NAME)
@@ -392,7 +390,7 @@ build_hot_reload :: proc(args: ^Args) -> (out: string, err: os.Error) {
 		return "", .Not_Exist
 	}
 
-	dll_path := fmt.tprintf("%s/%s", HOT_RELOAD_PATH, dll_file)
+	dll_path := fmt.tprintf("%s/%s", HOT_OUT, dll_file)
 
 
 	cmd: [dynamic]string
@@ -445,9 +443,9 @@ build_hot_reload :: proc(args: ^Args) -> (out: string, err: os.Error) {
 		return "", nil
 	}
 
-	exe := HOT_RELOAD_PATH + "/" + PROCESS_NAME
+	exe := HOT_OUT + "/" + PROCESS_NAME
 	when ODIN_OS == .Windows {
-		exe = HOT_RELOAD_PATH + "/" + PROCESS_NAME + ".exe"
+		exe = HOT_OUT + "/" + PROCESS_NAME + ".exe"
 	}
 
 	clear(&cmd)
@@ -456,7 +454,7 @@ build_hot_reload :: proc(args: ^Args) -> (out: string, err: os.Error) {
 		..[]string {
 			"odin",
 			"build",
-			fmt.tprintf("%s/main_hot_reload", SOURCE_DIR),
+			fmt.tprintf("%s/hot", ENTRY_SRC_DIR),
 			"-define:SOKOL_DLL=true",
 			fmt.tprintf("-define:DLL_FILE=%s", dll_file),
 			fmt.tprintf("-out:%s", exe),
