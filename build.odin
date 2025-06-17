@@ -733,7 +733,7 @@ must :: proc(value: $T, err: $T2, loc := #caller_location) -> T {
 
 @(require_results)
 delete_dir :: proc(name: string) -> os.Error {
-	execute_cmd([]string{"bash", "-c", fmt.tprintf("rm -rf %s", name)}) or_return
+	execute_cmd([]string{"bash", "-c", fmt.tprintf("rm -rf %s || true", name)}) or_return
 
 	return nil
 }
