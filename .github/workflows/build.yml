@@ -8,7 +8,6 @@ on:
     branches:
       - master
 
-
 jobs:
   build_linux:
     name: Linux
@@ -18,33 +17,29 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release: false
-      
       - uses: mymindstorm/setup-emsdk@v14
-      
       - uses: actions/checkout@v4
-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libglu1-mesa-dev mesa-common-dev xorg-dev libasound2-dev
           version: 1.2
-      
       - name: Build hot reload
-        run: ./build.py -hot-reload
+        run: odin run . -- -hot
 
       - name: Build release
-        run: ./build.py -release
+        run: odin run . -- -release
 
       - name: Build web
-        run: ./build.py -web
+        run: odin run . -- -web
 
       - name: Build hot reload (debug)
-        run: ./build.py -hot-reload -debug
+        run: odin run . -- -hot-reload -debug
 
       - name: Build release (debug)
-        run: ./build.py -release -debug
+        run: odin run . -- -release -debug
 
       - name: Build web (debug)
-        run: ./build.py -web -debug
+        run: odin run . -- -web -debug
 
   build_macos:
     name: MacOS
@@ -57,60 +52,60 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release: false
-      
+
       - uses: mymindstorm/setup-emsdk@v14
 
       - uses: actions/checkout@v4
 
       - name: Build hot reload
-        run: ./build.py -hot-reload
+        run: odin run . -- -hot-reload
 
       - name: Build release
-        run: ./build.py -release
+        run: odin run . -- -release
 
       - name: Build web
-        run: ./build.py -web
+        run: odin run . -- -web
 
       - name: Build hot reload (debug)
-        run: ./build.py -hot-reload -debug
+        run: odin run . -- -hot-reload -debug
 
       - name: Build release (debug)
-        run: ./build.py -release -debug
+        run: odin run . -- -release -debug
 
       - name: Build web (debug)
-        run: ./build.py -web -debug
+        run: odin run . -- -web -debug
 
-  build_windows:
-    name: Windows
-    runs-on: windows-latest
-    steps:
-      - uses: laytan/setup-odin@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release: false
-
-      - uses: mymindstorm/setup-emsdk@v14
-
-      - uses: actions/setup-python@v5
-
-      - uses: actions/checkout@v4
-
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Build hot reload
-        run: python build.py -hot-reload
-
-      - name: Build release
-        run: python build.py -release
-
-      - name: Build web
-        run: python build.py -web
-
-      - name: Build hot reload (debug)
-        run: python build.py -hot-reload -debug
-
-      - name: Build release (debug)
-        run: python build.py -release -debug
-
-      - name: Build web (debug)
-        run: python build.py -web -debug
+  # build_windows:
+  #   name: Windows
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: laytan/setup-odin@v2
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         release: false
+  #
+  #     - uses: mymindstorm/setup-emsdk@v14
+  #
+  #     - uses: actions/setup-python@v5
+  #
+  #     - uses: actions/checkout@v4
+  #
+  #     - uses: ilammy/msvc-dev-cmd@v1
+  #
+  #     - name: Build hot reload
+  #       run: odin run . -- -hot-reload
+  #
+  #     - name: Build release
+  #       run: odin run . -- -release
+  #
+  #     - name: Build web
+  #       run: odin run . -- -web
+  #
+  #     - name: Build hot reload (debug)
+  #       run: odin run . -- -hot-reload -debug
+  #
+  #     - name: Build release (debug)
+  #       run: odin run . -- -release -debug
+  #
+  #     - name: Build web (debug)
+  #       run: odin run . -- -web -debug
