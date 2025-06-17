@@ -707,7 +707,7 @@ download_extract :: proc(url: string, output_path: string, archive_path := "") -
 
 	}
 	cmd := fmt.tprintf(
-		"curl -# -L %s | tar --strip-components=2 -xv -C %s %s",
+		"curl -# -L %s | tar --strip-components=2 -xzv -C %s %s",
 		url,
 		output_path,
 		archive_path,
