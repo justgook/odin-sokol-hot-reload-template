@@ -40,6 +40,16 @@ installation directory by adding `-emsdk-path path/to/emscripten`.
 You'll have to run `-sokol-compile` with these things present
 for it to compile the web (WASM) Sokol libraries.
 
+## Setup emcc
+
+### GIT
+
+`git clone git@github.com:emscripten-core/emscripten.git` and use it with `-emsdk-path`
+
+### MacOs
+
+  `brew install emscripten`
+
 ## Hot reloading
 
 1. Make sure you've done the [setup](#setup)
@@ -81,7 +91,7 @@ Chrome tends to have better error messages than Firefox.
 
 ## Debugging
 
-Add `-debug` when running `odin run . --` to create debuggable binaries.
+Add `-debug` when running `build` to create debuggable binaries.
 
 ## Updating Sokol
 
