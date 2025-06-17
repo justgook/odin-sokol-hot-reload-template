@@ -33,7 +33,7 @@ jobs:
         run: odin run . -- -web
 
       - name: Build hot reload (debug)
-        run: odin run . -- -hot-reload -debug
+        run: odin run . -- -hot -debug
 
       - name: Build release (debug)
         run: odin run . -- -release -debug
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build hot reload
-        run: odin run . -- -hot-reload
+        run: odin run . -- -hot
 
       - name: Build release
         run: odin run . -- -release
@@ -67,7 +67,7 @@ jobs:
         run: odin run . -- -web
 
       - name: Build hot reload (debug)
-        run: odin run . -- -hot-reload -debug
+        run: odin run . -- -hot -debug
 
       - name: Build release (debug)
         run: odin run . -- -release -debug
@@ -93,7 +93,7 @@ jobs:
   #     - uses: ilammy/msvc-dev-cmd@v1
   #
   #     - name: Build hot reload
-  #       run: odin run . -- -hot-reload
+  #       run: odin run . -- -hot
   #
   #     - name: Build release
   #       run: odin run . -- -release
@@ -102,7 +102,7 @@ jobs:
   #       run: odin run . -- -web
   #
   #     - name: Build hot reload (debug)
-  #       run: odin run . -- -hot-reload -debug
+  #       run: odin run . -- -hot -debug
   #
   #     - name: Build release (debug)
   #       run: odin run . -- -release -debug
