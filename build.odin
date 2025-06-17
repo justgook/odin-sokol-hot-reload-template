@@ -702,16 +702,20 @@ download :: proc(url: string, output_path: string) -> os.Error {
 @(require_results)
 download_extract :: proc(url: string, output_path: string, archive_path := "") -> os.Error {
 	mkdir(output_path) or_return
+	assert(archive_path != "", "archive_path must be provided")
 
-	if archive_path != "" {
-
+	curl_string :: "curl -# -L %s"
+	cmd_string: string
+	when ODIN_OS == .Windows {
+		panic("implement download_extract")
+	} else when ODIN_OS == .Linux {
+		cmd_string = curl_string + " | tar --strip-components=2 --wildcards -xzv -C %s %s"
+	} else when ODIN_OS == .Darwin {
+		cmd_string = curl_string + " | tar --strip-components=2 -xv -C %s %s"
 	}
-	cmd := fmt.tprintf(
-		"curl -# -L %s | tar --strip-components=2 -xzv -C %s %s",
-		url,
-		output_path,
-		archive_path,
-	)
+
+
+	cmd := fmt.tprintf(cmd_string, url, output_path, archive_path)
 	fmt.printfln("Downloading: %s", cmd)
 	execute2(cmd) or_return
 
