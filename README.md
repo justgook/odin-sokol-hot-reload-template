@@ -18,37 +18,37 @@ Demo and technical overview [video](https://www.youtube.com/watch?v=0wNjfgZlDyw)
 
 ## Setup
 
-Run `build.py -update-sokol`.
+Run `odin run . -- -sokol-update`.
 It will download the Sokol bindings and try to build the Sokol C libraries.
 It also downloads the Sokol Shader compiler.
 
 The above may fail if no C compiler is available.
 For example, on Windows you may need to use
 the `x64 Native Tools Command Prompt for VS20XX`.
-You can re-run the compilation using `build.py -compile-sokol`.
-This will avoid re-downloading Sokol, which `-update-sokol` does.
+You can re-run the compilation using `odin run . -- -sokol-compile`.
+This will avoid re-downloading Sokol, which `-sokol-update` does.
 
 > [!NOTE]
-> `-update-sokol` always does `-compile-sokol` automatically.
+> `-sokol-update` always does `-sokol-compile` automatically.
 > [!WARNING]
-> `-update-sokol` deletes the `sokol-shdc` and `source/sokol` directories.
+> `-sokol-update` deletes the `sokol-shdc` and `src/game/sokol` directories.
 
 If you want web build support,
 then you either need `emcc` in your path
 _or_ you can point to the emscripten
 installation directory by adding `-emsdk-path path/to/emscripten`.
-You'll have to run `-compile-sokol` with these things present
+You'll have to run `-sokol-compile` with these things present
 for it to compile the web (WASM) Sokol libraries.
 
 ## Hot reloading
 
 1. Make sure you've done the [setup](#setup)
-2. Run `odin run . -- -hot-reload -run`
+2. Run `odin run . -- -hot -run`
 3. A game with just a spinning cube should start
 4. Leave the game running, change a some line in
-  `source/game.odin`. For example, you can modify the line `g.rx += 60 * dt`
+  `src/game/game.odin`. For example, you can modify the line `g.rx += 60 * dt`
   to use the value `500` instead of `60`.
-5. Re-run `odin run . -- -hot-reload -run`.
+5. Re-run `odin run . -- -hot -run`.
   The game DLL will re-compile and get reloaded. The cube will spin faster.
 
 > [!NOTE]
@@ -61,7 +61,7 @@ for it to compile the web (WASM) Sokol libraries.
 
 1. Make sure you've done the [setup](#setup).
   Pay attention to the stuff about `emcc` and `-emsdk-path`.
-2. Run `build.py -web`. You may also need to add `-emsdk-path path/to/emscripten`.
+2. Run `odin run . -- -web`. You may also need to add `-emsdk-path path/to/emscripten`.
 3. Web build is in `build/web`
 
 > [!NOTE]
@@ -77,27 +77,27 @@ Chrome tends to have better error messages than Firefox.
 
 ## Native release builds
 
-`build.py -release` makes a native release build of your game (no hot reloading).
+`odin run . -- -release` makes a native release build of your game (no hot reloading).
 
 ## Debugging
 
-Add `-debug` when running `build.py` to create debuggable binaries.
+Add `-debug` when running `odin run . --` to create debuggable binaries.
 
 ## Updating Sokol
 
-`odin run . -- -update-sokol` downloads the lastest Odin Sokol bindings
+`odin run . -- -sokol-update` downloads the lastest Odin Sokol bindings
 and latest Sokol shader compiler.
 
 > [!WARNING]
 > This will completely replace everything
-> in the `sokol-shdc` and `source/sokol` directories.
+> in the `sokol-shdc` and `src/game` directories.
 
-`odin run . -- -compile-sokol` recompiles the sokol C and WASM libraries.
+`odin run . -- -sokol-compile` recompiles the sokol C and WASM libraries.
 
 > [!NOTE]
-> `-update-sokol` automatically does `-compile-sokol`.
-> You can also add `-update-sokol` or `-compile-sokol` when building the game.
-> For example you can do `build.py -hot-reload -update-sokol`
+> `-sokol-update` automatically does `-sokol-compile`.
+> You can also add `-sokol-update` or `-sokol-compile` when building the game.
+> For example you can do `odin run . -- -hot -sokol-update`
 > to update Sokol before compiling the hot reload executable.
 
 ## Common issues
@@ -105,16 +105,16 @@ and latest Sokol shader compiler.
 ### The build script crashes due to missing libraries
 
 - Make sure you're using a terminal that has access to a C compiler.
-- Re-run `odin run . -- -compile-sokol`. If you want web (WASM) support,
+- Re-run `odin run . -- -sokol-compile`. If you want web (WASM) support,
   then make sure to have `emcc` in the PATH
   or use `-emsdk-path path/to/emscripten` to point out your emscripten installation.
 
 ### I'm on an old mac with no metal support
 
 - Add `-gl` when running `build` to force OpenGL
-- Remove the `set -e` lines from `source/sokol/build_clibs_macos.sh`
-  and `source/sokol/build_clibs_macos_dylib.sh`
-  and re-run `odin run . --  -compile-sokol`.
+- Remove the `set -e` lines from `src/game/build_clibs_macos.sh`
+  and `src/game/build_clibs_macos_dylib.sh`
+  and re-run `odin run . --  -sokol-compile`.
   This will make those scripts not crash when it fails
   to compile some metal-related Sokol libraries.
 
