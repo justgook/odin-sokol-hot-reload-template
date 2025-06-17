@@ -169,7 +169,7 @@ compile_sokol :: proc(args: ^Args) -> os.Error {
 		}
 	} else when ODIN_OS == .Linux || ODIN_OS == .Darwin {
 		when ODIN_OS == .Linux {
-			execute2("build_clibs_linux.sh") or_return
+			execute2("./build_clibs_linux.sh") or_return
 		} else when ODIN_OS == .Darwin {
 			execute2("./build_clibs_macos.sh && ./build_clibs_macos_dylib.sh") or_return
 		}
